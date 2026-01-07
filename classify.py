@@ -387,7 +387,7 @@ def main():
     
     # Save results
     results_df = pd.DataFrame(results)
-    output_file = "output/hardened_results.csv"
+    output_file = "output/results.csv"
     results_df.to_csv(output_file, index=False)
     
     # Save evidence log
