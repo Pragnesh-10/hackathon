@@ -382,8 +382,8 @@ def main():
         
         # Rate limit delay
         if idx < len(test_ids) - 1:
-            print(f"   ⏱️  Waiting 25s...")
-            time.sleep(25)
+            print(f"   ⏱️  Waiting 5s...")
+            time.sleep(5)
     
     # Save results
     results_df = pd.DataFrame(results)
