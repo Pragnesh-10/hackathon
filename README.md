@@ -1,66 +1,72 @@
 # Track A: Novel-Backstory Consistency Classifier
 
-Hypothesis-based causal consistency system using Pathway framework. Evaluates whether a backstory is logically and causally coherent with a full novel through evidence retrieval, temporal reasoning, and multi-hypothesis scoring. Handles 100k+ word novels efficiently with token-based chunking and semantic search.
+Claim-based causal consistency classifier that evaluates whether character backstories are logically and causally coherent with source novels. Uses evidence retrieval, hypothesis scoring, and strict validation to detect contradictions, timeline violations, and insufficient evidence.
 
-## Architecture
-
-```
-main.py → pipeline.py → [ingestion → chunking → indexing → retrieval → classification] → results.csv
-```
-
-## Setup
+## Quick Start
 
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Set OpenAI API key
-export OPENAI_API_KEY="your-api-key-here"
+# Add your OpenAI API key to .env file
+echo "OPENAI_API_KEY=your-key-here" > .env
+
+# Run classifier
+python3 classify.py
 ```
 
-## Data Structure
+## Output
 
-```
-data/
-├── story_1/
-│   ├── novel.txt
-│   └── backstory.txt
-├── story_2/
-│   ├── novel.txt
-│   └── backstory.txt
-└── ...
-```
+- `output/hardened_results.csv` - Binary predictions with confidence scores
+- `output/evidence_log.json` - Detailed evidence trail for each claim
 
-## Run
+## How It Works
 
-```bash
-python main.py
-```
+The classifier breaks backstories into atomic claims (childhood events, beliefs, affiliations, irreversible actions), retrieves claim-specific evidence from novels, and applies strict Python-controlled rules:
 
-Output: `output/results.csv`
+- **Hard contradictions** → prediction = 0
+- **Timeline violations** → prediction = 0  
+- **Missing evidence for key claims** → prediction = 0
+- **Mixed or ambiguous evidence** → prediction = 0 (conservative bias)
+- **All claims supported** → prediction = 1
 
-## Pipeline Stages
-
-1. **Ingestion**: Load novels and backstories into Pathway tables
-2. **Chunking**: Split novels into 1000-token chunks with 200-token overlap
-3. **Indexing**: Embed chunks using sentence-transformers
-4. **Retrieval**: Query with backstory, retrieve top 15 relevant chunks per story
-5. **Classification**: LLM analyzes evidence + backstory, outputs binary prediction
-6. **Output**: Write `story_id,prediction` to CSV
+All prediction logic is in Python (not LLM-controlled). Errors always fail to 0 (never default to 1).
 
 ## Configuration
 
 Edit `config.py` to modify:
 - Chunk size/overlap
-- Top-k retrieval count
-- LLM model
-- Classification prompt
+- Top-k retrieval
+- Model selection
+
+## Architecture
+
+```
+classify.py
+    ├── Data Loading (train.csv + novels)
+    ├── For each backstory:
+    │   ├── Decompose into atomic claims
+    │   ├── Retrieve evidence per claim (top 2-3 chunks)
+    │   ├── Classify evidence (supports/contradicts/insufficient)
+    │   └── Apply Python rules → prediction
+    └── Output results + evidence log
+```
+
+## Data Structure
+
+```
+data/Dataset/
+├── train.csv              # Training examples
+├── test.csv               # Test examples
+└── Books/
+    ├── In search of the castaways.txt
+    └── The Count of Monte Cristo.txt
+```
 
 ## Components
 
-- `src/ingestion.py`: Pathway-based data loading
-- `src/chunker.py`: Token-based text chunking
-- `src/indexer.py`: Embedding and indexing
-- `src/retriever.py`: Similarity-based retrieval
-- `src/classifier.py`: LLM-based binary classification
-- `src/pipeline.py`: End-to-end orchestration
+- `src/chunker.py` - Token-based text chunking
+- `src/indexer.py` - Embedding utilities
+- `src/retriever.py` - Similarity-based retrieval
+- `src/classifier.py` - Original hypothesis-based classifier
+- `src/pipeline.py` - Pathway-based orchestration (legacy)

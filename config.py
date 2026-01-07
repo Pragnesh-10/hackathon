@@ -1,5 +1,9 @@
 """Configuration for the pipeline."""
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Data paths
 DATA_DIR = "data"
